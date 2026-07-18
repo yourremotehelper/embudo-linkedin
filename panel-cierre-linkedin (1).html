@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de cierre — Captación LinkedIn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2333;
+    --ink-soft:#5A6274;
+    --paper:#F2F3F6;
+    --card:#FFFFFF;
+    --line:#DCDFE5;
+    --alert:#E1571B;
+    --alert-bg:#FCE7DC;
+    --good:#1F7A5C;
+    --good-bg:#E1F0EA;
+    --info:#2B4C7E;
+    --info-bg:#E5EBF4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;flex-wrap:wrap;margin-bottom:28px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    color:var(--info);font-weight:600;margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;margin:0;
+    letter-spacing:-.01em;
+  }
+  .sub{color:var(--ink-soft);font-size:14px;margin:6px 0 0;max-width:520px;}
+  .connstate{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:6px;}
+  .connstate.live::before{content:"●";color:var(--good);margin-right:5px;}
+  .connstate.down::before{content:"●";color:var(--alert);margin-right:5px;}
+  button{
+    font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;font-weight:500;
+    border-radius:6px;cursor:pointer;padding:10px 16px;border:1px solid var(--ink);
+    background:var(--ink);color:#fff;
+  }
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+  button.danger{background:transparent;color:var(--alert);border:1px solid var(--alert);}
+  button:hover{opacity:.88;}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+  @media (max-width:880px){.layout{grid-template-columns:1fr;}}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:20px;
+  }
+  .card h2{
+    font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin:0 0 4px;
+  }
+  .card .hint{font-size:12px;color:var(--ink-soft);margin:0 0 16px;}
+  label{display:block;font-size:12.5px;color:var(--ink-soft);margin:10px 0 4px;}
+  input[type=date],textarea{
+    width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+    font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:var(--ink);background:#fff;
+  }
+  textarea{resize:vertical;min-height:56px;font-size:13px;}
+  legend{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+    color:var(--ink-soft);font-weight:600;margin:14px 0 8px;padding:0;
+  }
+  .counter{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:8px 0;border-bottom:1px solid var(--line);
+  }
+  .counter .cname{font-size:13px;}
+  .counter .cctrl{display:flex;align-items:center;gap:6px;}
+  .counter .cbtn{
+    width:28px;height:28px;padding:0;border-radius:6px;font-size:16px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .counter .cval{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;
+    min-width:28px;text-align:center;
+  }
+  .counter .cval-input{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;
+    width:44px;text-align:center;border:1px solid var(--line);border-radius:6px;
+    padding:4px 2px;color:var(--ink);background:#fff;
+  }
+  .counter .cval-input:focus{outline:2px solid var(--info);outline-offset:1px;}
+  .counter .cval-input::-webkit-inner-spin-button,
+  .counter .cval-input::-webkit-outer-spin-button{opacity:0.6;}
+  .weeklist{list-style:none;margin:0;padding:0;}
+  .weeklist li{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;
+  }
+  .weeklist li:hover{background:var(--paper);}
+  .weeklist li.active{background:var(--info-bg);border-radius:6px;}
+  .weeklist .wl-label{font-weight:500;}
+  .weeklist .wl-rate{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .weeklist .wl-del{background:none;border:none;color:var(--ink-soft);padding:2px 6px;font-size:15px;}
+  .weeklist .wl-del:hover{color:var(--alert);}
+  .empty{font-size:13px;color:var(--ink-soft);padding:12px 0;}
+  .statrow{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .stat{background:var(--paper);border-radius:8px;padding:10px 14px;flex:1;min-width:120px;}
+  .stat .l{font-size:11px;color:var(--ink-soft);margin:0 0 4px;}
+  .stat .v{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;margin:0;}
+  .stat.warn{background:var(--alert-bg);} .stat.warn .v{color:#9c3a13;}
+  .stat.ok{background:var(--good-bg);} .stat.ok .v{color:var(--good);}
+  .funnelpanel{background:var(--ink);border-radius:10px;padding:22px 22px 8px;margin-bottom:20px;}
+  .funnelpanel .fp-title{font-family:'IBM Plex Mono',monospace;color:#B9C0D4;font-size:11px;letter-spacing:.1em;margin:0 0 10px;}
+  table.rates{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
+  table.rates th{text-align:left;font-size:11px;color:var(--ink-soft);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);}
+  table.rates td{padding:8px;border-bottom:1px solid var(--line);}
+  table.rates td.num{font-family:'IBM Plex Mono',monospace;text-align:right;}
+  table.rates tr.bottleneck td{background:var(--alert-bg);}
+  table.rates tr.bottleneck td:first-child{border-left:3px solid var(--alert);}
+  .badge{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;}
+  .badge.alert{background:var(--alert-bg);color:#9c3a13;}
+  .badge.ok{background:var(--good-bg);color:var(--good);}
+  .badge.pending{background:var(--line);color:var(--ink-soft);}
+  .comments{font-size:13px;line-height:1.6;color:var(--ink);white-space:pre-wrap;}
+  .trend-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .trend-row .tw{width:130px;color:var(--ink-soft);flex-shrink:0;}
+  .trend-row .bar-bg{flex:1;background:var(--paper);border-radius:4px;height:8px;overflow:hidden;}
+  .trend-row .bar-fill{height:100%;background:var(--info);border-radius:4px;}
+  .trend-row .tv{width:52px;text-align:right;font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+  .section-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin:24px 0 10px;}
+  @media print{
+    body{background:#fff;padding:0;}
+    aside, .no-print{display:none !important;}
+    .layout{grid-template-columns:1fr;}
+    .card{border:1px solid #999;box-shadow:none;}
+    .funnelpanel{background:#fff;border:1px solid var(--ink);}
+    .funnelpanel .fp-title{color:var(--ink-soft);}
+    .funnelpanel svg text{fill:var(--ink) !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">SEGUIMIENTO SEMANAL DEL EMBUDO</p>
+      <h1>Panel de cierre — Captación LinkedIn</h1>
+      <p class="sub">Dónde se atasca la incorporación de candidatos que entran por LinkedIn, semana a semana.</p>
+      <p class="connstate" id="conn-state">Conectando…</p>
+    </div>
+    <div class="no-print" style="display:flex;gap:8px;">
+      <button class="ghost" onclick="window.print()">Exportar informe (PDF)</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <aside>
+      <div class="card no-print">
+        <h2>Semana activa</h2>
+        <p class="hint">Abre una semana existente o crea una nueva. Los contadores se guardan al momento y se comparten en tiempo real con quien más tenga esta página abierta.</p>
+        <label>Inicio de semana (lunes)</label>
+        <input type="date" id="f-weekstart">
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button style="flex:1;" onclick="openOrCreateWeek()">Abrir / crear semana</button>
+        </div>
+
+        <div id="counters-block" style="display:none;">
+          <legend>ACTIVACIÓN</legend>
+          <div id="counters-activacion"></div>
+          <legend>EMBUDO DE CANDIDATOS</legend>
+          <div id="counters-embudo"></div>
+
+          <label>Incidencias / comentarios de la semana</label>
+          <textarea id="f-comentarios" placeholder="Problemas de acceso, coordinación, etc."></textarea>
+          <button class="ghost" style="width:100%;margin-top:8px;" onclick="saveComentarios()">Guardar comentario</button>
+        </div>
+      </div>
+
+      <div class="card no-print" style="margin-top:16px;">
+        <h2>Semanas guardadas</h2>
+        <ul class="weeklist" id="week-list"></ul>
+        <p class="empty" id="week-empty" style="display:none;">Aún no hay semanas guardadas.</p>
+      </div>
+    </aside>
+
+    <main>
+      <div id="report"></div>
+    </main>
+
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAuXWZgYbzx6R0sg1GUFj_F7w83gsAnZuQ",
+  authDomain: "linkedin-embudo.firebaseapp.com",
+  projectId: "linkedin-embudo",
+  storageBucket: "linkedin-embudo.firebasestorage.app",
+  messagingSenderId: "639310151599",
+  appId: "1:639310151599:web:2001c4b42d7b432a24b95a"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const COUNTER_FIELDS_ACT = [
+  {key:'perfilesDisp', label:'Perfiles disponibles'},
+  {key:'perfilesAct', label:'Perfiles activos'},
+  {key:'campanas', label:'Campañas / ofertas activas'}
+];
+const STAGES = [
+  {key:'recibidos', label:'Recibidos'},
+  {key:'cualificados', label:'Cualificados'},
+  {key:'contactados', label:'Contactados'},
+  {key:'demo', label:'Demo'},
+  {key:'albert', label:'Albert'},
+  {key:'incorporados', label:'Incorporados'}
+];
+const COUNTER_FIELDS_FUNNEL = [
+  {key:'recibidos', label:'Candidatos recibidos'},
+  {key:'cualificados', label:'Candidatos cualificados'},
+  {key:'contactados', label:'Contactados (audio/llamada)'},
+  {key:'demo', label:'Avanzan a demo'},
+  {key:'albert', label:'Avanzan a reunión con Albert'},
+  {key:'incorporados', label:'Incorporados finalmente al equipo'}
+];
+const TRANSITIONS_DEF = [
+  {from:'recibidos', to:'cualificados', label:'Tasa de cualificación', desc:'Cualificados / recibidos'},
+  {from:'cualificados', to:'contactados', label:'Tasa de contacto', desc:'Contactados / cualificados'},
+  {from:'contactados', to:'demo', label:'Tasa de avance a demo', desc:'Demo / contactados'},
+  {from:'demo', to:'albert', label:'Tasa de avance a Albert', desc:'Albert / demo'},
+  {from:'albert', to:'incorporados', label:'Tasa de incorporación final', desc:'Incorporados / reunión con Albert'}
+];
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ALL_FIELDS = [...COUNTER_FIELDS_ACT, ...COUNTER_FIELDS_FUNNEL].map(f=>f.key);
+
+let weeks = [];
+let currentId = null;
+let unsubList = null;
+let unsubCurrent = null;
+
+function fmtDate(d){ return `${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+function weekLabel(startStr){
+  const start = new Date(startStr+'T00:00:00');
+  const end = new Date(start); end.setDate(end.getDate()+6);
+  return `${fmtDate(start)} – ${fmtDate(end)}`;
+}
+function pct(n){ return (n!==null && isFinite(n) && !isNaN(n)) ? (n*100).toFixed(1)+'%' : '—'; }
+function safeDiv(a,b){ return b>0 ? a/b : null; }
+function blankWeek(weekStart){
+  const w = {weekStart, comentarios:''};
+  ALL_FIELDS.forEach(k=> w[k]=0);
+  return w;
+}
+
+function setConn(ok){
+  const el = document.getElementById('conn-state');
+  el.className = 'connstate ' + (ok?'live':'down');
+  el.textContent = ok ? 'Conectado — datos en tiempo real' : 'Sin conexión a la base de datos';
+}
+
+function startListening(){
+  unsubList = db.collection('weeks').orderBy('weekStart').onSnapshot(snap=>{
+    weeks = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    ALL_FIELDS.forEach(()=>{});
+    weeks.forEach(w=> ALL_FIELDS.forEach(k=>{ if(typeof w[k]!=='number') w[k]=w[k]||0; }));
+    setConn(true);
+    renderWeekList();
+    if(currentId){
+      const w = weeks.find(x=>x.id===currentId);
+      if(w) renderReport(w); else renderReport(null);
+    } else if(weeks.length){
+      renderReport(null);
+    } else {
+      renderReport(null);
+    }
+  }, err=>{
+    console.error(err);
+    setConn(false);
+  });
+}
+
+function renderWeekList(){
+  const ul = document.getElementById('week-list');
+  const empty = document.getElementById('week-empty');
+  ul.innerHTML = '';
+  if(!weeks.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  [...weeks].reverse().forEach(w=>{
+    const conv = safeDiv(w.incorporados, w.recibidos);
+    const li = document.createElement('li');
+    li.className = w.id===currentId ? 'active' : '';
+    li.innerHTML = `<span class="wl-label">${weekLabel(w.weekStart)}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="wl-rate">${pct(conv)}</span>
+        <button class="wl-del" title="Eliminar" data-id="${w.id}">×</button>
+      </span>`;
+    li.querySelector('.wl-label').onclick = ()=> openWeek(w.id);
+    li.querySelector('.wl-rate').onclick = ()=> openWeek(w.id);
+    li.querySelector('.wl-del').onclick = (e)=>{ e.stopPropagation(); deleteWeek(w.id); };
+    ul.appendChild(li);
+  });
+}
+
+function docIdFor(dateStr){ return 'week-' + dateStr; }
+
+async function openOrCreateWeek(){
+  const ws = document.getElementById('f-weekstart').value;
+  if(!ws){ alert('Elige la fecha de inicio de semana.'); return; }
+  const id = docIdFor(ws);
+  const ref = db.collection('weeks').doc(id);
+  try{
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set(blankWeek(ws));
+    }
+  }catch(e){
+    alert('No se pudo conectar con la base de datos.');
+    console.error(e);
+    return;
+  }
+  openWeek(id);
+}
+
+function openWeek(id){
+  currentId = id;
+  document.getElementById('counters-block').style.display = 'block';
+  if(unsubCurrent) unsubCurrent();
+  unsubCurrent = db.collection('weeks').doc(id).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const w = {id:snap.id, ...snap.data()};
+    ALL_FIELDS.forEach(k=>{ if(typeof w[k]!=='number') w[k]=w[k]||0; });
+    document.getElementById('f-weekstart').value = w.weekStart;
+    document.getElementById('f-comentarios').value = w.comentarios || '';
+    renderCounters(w);
+    renderReport(w);
+    renderWeekList();
+  });
+}
+
+function renderCounters(w){
+  const actEl = document.getElementById('counters-activacion');
+  const fEl = document.getElementById('counters-embudo');
+  actEl.innerHTML = '';
+  fEl.innerHTML = '';
+  COUNTER_FIELDS_ACT.forEach(f=> actEl.appendChild(counterRow(f, w[f.key])));
+  COUNTER_FIELDS_FUNNEL.forEach(f=> fEl.appendChild(counterRow(f, w[f.key])));
+}
+
+function counterRow(f, value){
+  const row = document.createElement('div');
+  row.className = 'counter';
+  row.innerHTML = `<span class="cname">${f.label}</span>
+    <span class="cctrl">
+      <button class="ghost cbtn" data-field="${f.key}" data-delta="-1">−</button>
+      <input class="cval-input" type="number" min="0" step="1" inputmode="numeric" data-field="${f.key}" value="${value}">
+      <button class="ghost cbtn" data-field="${f.key}" data-delta="1">+</button>
+    </span>`;
+  row.querySelectorAll('.cbtn').forEach(btn=>{
+    btn.onclick = ()=> adjustCounter(f.key, parseInt(btn.dataset.delta,10));
+  });
+  const inputEl = row.querySelector('.cval-input');
+  inputEl.addEventListener('change', ()=> setCounterDirect(f.key, inputEl));
+  inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') inputEl.blur(); });
+  return row;
+}
+
+async function adjustCounter(field, delta){
+  if(!currentId) return;
+  const ref = db.collection('weeks').doc(currentId);
+  try{
+    await db.runTransaction(async (tx)=>{
+      const snap = await tx.get(ref);
+      const cur = (snap.exists && typeof snap.data()[field]==='number') ? snap.data()[field] : 0;
+      const next = Math.max(0, cur + delta);
+      tx.update(ref, {[field]: next});
+    });
+  }catch(e){
+    console.error(e);
+    alert('No se pudo actualizar. Revisa tu conexión.');
+  }
+}
+
+async function setCounterDirect(field, inputEl){
+  if(!currentId) return;
+  let val = parseInt(inputEl.value, 10);
+  if(isNaN(val) || val<0) val = 0;
+  inputEl.value = val;
+  try{
+    await db.collection('weeks').doc(currentId).update({[field]: val});
+  }catch(e){
+    console.error(e);
+    alert('No se pudo guardar el valor. Revisa tu conexión.');
+  }
+}
+
+async function saveComentarios(){
+  if(!currentId) return;
+  const txt = document.getElementById('f-comentarios').value;
+  try{
+    await db.collection('weeks').doc(currentId).update({comentarios: txt});
+  }catch(e){
+    alert('No se pudo guardar el comentario.');
+    console.error(e);
+  }
+}
+
+async function deleteWeek(id){
+  if(!confirm('¿Eliminar esta semana guardada? Esta acción no se puede deshacer.')) return;
+  try{ await db.collection('weeks').doc(id).delete(); }catch(e){ console.error(e); }
+  if(currentId===id){
+    currentId=null;
+    if(unsubCurrent){ unsubCurrent(); unsubCurrent=null; }
+    document.getElementById('counters-block').style.display='none';
+    document.getElementById('f-weekstart').value='';
+  }
+}
+
+function computeRates(w){
+  const vals = {}; STAGES.forEach(s=> vals[s.key]=w[s.key]||0);
+  const rates = TRANSITIONS_DEF.map(t=>({...t, rate: safeDiv(vals[t.to], vals[t.from])}));
+  let bottleneckIdx = -1, minRate = Infinity;
+  rates.forEach((r,i)=>{ if(r.rate!==null && r.rate<minRate){ minRate=r.rate; bottleneckIdx=i; } });
+  const conversionTotal = safeDiv(vals.incorporados, vals.recibidos);
+  const cualifPorCampana = safeDiv(vals.cualificados, w.campanas);
+  const compliant = (w.perfilesAct===0 && w.campanas===0) ? null : (w.perfilesAct>=7 && w.campanas>=7);
+  let monotone = true;
+  for(let i=0;i<STAGES.length-1;i++){
+    if(vals[STAGES[i+1].key] > vals[STAGES[i].key]) monotone = false;
+  }
+  const hasFunnelData = STAGES.some(s=>vals[s.key]>0);
+  return {vals, rates, bottleneckIdx, conversionTotal, cualifPorCampana, compliant, monotone, hasFunnelData};
+}
+
+function buildFunnelSVG(vals){
+  const w = 640, stageH = 62, gap = 6;
+  const maxCount = Math.max(1, ...STAGES.map(s=>vals[s.key]));
+  const minW = 140, maxW = 560;
+  let y = 10;
+  let svg = `<svg width="100%" viewBox="0 0 ${w} ${STAGES.length*(stageH+gap)+20}" xmlns="http://www.w3.org/2000/svg">`;
+  STAGES.forEach((s,i)=>{
+    const count = vals[s.key]||0;
+    const barW = minW + (maxCount>0 ? (count/maxCount) : 0) * (maxW-minW);
+    const x = (w-barW)/2;
+    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${stageH-gap}" rx="6" fill="#2B4C7E"></rect>`;
+    svg += `<text x="${w/2}" y="${y+(stageH-gap)/2-6}" text-anchor="middle" fill="#fff" font-family="IBM Plex Sans" font-size="13" font-weight="500">${s.label}</text>`;
+    svg += `<text x="${w/2}" y="${y+(stageH-gap)/2+14}" text-anchor="middle" fill="#B9C0D4" font-family="IBM Plex Mono" font-size="15" font-weight="600">${count}</text>`;
+    if(i<STAGES.length-1){
+      const trans = TRANSITIONS_DEF[i];
+      const isBottle = trans._bottleneck;
+      const midY = y+stageH-gap+ (gap/2);
+      svg += `<text x="${w/2+barW/2+16}" y="${midY+4}" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="${isBottle?'#F4A582':'#8792AB'}">${pct(trans.rate)}</text>`;
+      if(isBottle){
+        svg += `<text x="${w/2+barW/2+16}" y="${midY-8}" text-anchor="start" font-family="IBM Plex Mono" font-size="9.5" letter-spacing="0.06em" fill="#E1571B">CUELLO DE BOTELLA</text>`;
+      }
+    }
+    y += stageH;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderReport(w){
+  const el = document.getElementById('report');
+  if(!w){
+    el.innerHTML = `<div class="card"><h2>Sin semana seleccionada</h2><p class="hint">Elige una fecha de inicio de semana en el panel izquierdo y pulsa "Abrir / crear semana" para empezar a registrar datos, o selecciona una semana ya guardada.</p></div>`;
+    return;
+  }
+  const r = computeRates(w);
+  TRANSITIONS_DEF.forEach((t,i)=> t._bottleneck = (i===r.bottleneckIdx));
+
+  const complianceBadge = r.compliant===null ? `<span class="badge pending">PENDIENTE</span>`
+    : r.compliant ? `<span class="badge ok">CUMPLE</span>` : `<span class="badge alert">NO CUMPLE</span>`;
+  const validationBadge = !r.hasFunnelData ? `<span class="badge pending">PENDIENTE</span>`
+    : r.monotone ? `<span class="badge ok">OK</span>` : `<span class="badge alert">REVISAR</span>`;
+
+  let ratesRows = '';
+  r.rates.forEach((t,i)=>{
+    ratesRows += `<tr class="${i===r.bottleneckIdx?'bottleneck':''}">
+      <td>${t.label}${i===r.bottleneckIdx?' <span class="badge alert">MAYOR PÉRDIDA</span>':''}<br><span style="color:var(--ink-soft);font-size:11.5px;">${t.desc}</span></td>
+      <td class="num">${pct(t.rate)}</td>
+    </tr>`;
+  });
+  ratesRows += `<tr><td>Conversión total (contratación)<br><span style="color:var(--ink-soft);font-size:11.5px;">Incorporados / recibidos</span></td><td class="num">${pct(r.conversionTotal)}</td></tr>`;
+  ratesRows += `<tr><td>Cualificados por campaña<br><span style="color:var(--ink-soft);font-size:11.5px;">Cualificados / campañas activas</span></td><td class="num">${r.cualifPorCampana!==null?r.cualifPorCampana.toFixed(1):'—'}</td></tr>`;
+
+  let trendRows = '';
+  const maxConv = Math.max(0.01, ...weeks.map(x=>{ const c=safeDiv(x.incorporados,x.recibidos); return c||0; }));
+  weeks.forEach(x=>{
+    const c = safeDiv(x.incorporados, x.recibidos);
+    const fillPct = c!==null ? Math.max(2,(c/maxConv)*100) : 0;
+    trendRows += `<div class="trend-row">
+      <span class="tw">${weekLabel(x.weekStart)}</span>
+      <span class="bar-bg"><span class="bar-fill" style="width:${fillPct}%;"></span></span>
+      <span class="tv">${pct(c)}</span>
+    </div>`;
+  });
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>${weekLabel(w.weekStart)}</h2>
+      <p class="hint">Estado del embudo y punto de mayor pérdida esta semana — se actualiza en tiempo real</p>
+
+      <div class="statrow">
+        <div class="stat"><p class="l">Perfiles disponibles</p><p class="v">${w.perfilesDisp||0}</p></div>
+        <div class="stat"><p class="l">Perfiles activos</p><p class="v">${w.perfilesAct||0}</p></div>
+        <div class="stat"><p class="l">Campañas activas</p><p class="v">${w.campanas||0}</p></div>
+        <div class="stat ${r.compliant?'ok':(r.compliant===false?'warn':'')}"><p class="l">Cumplimiento mínimo</p><p class="v" style="font-size:13px;">${complianceBadge}</p></div>
+        <div class="stat ${r.monotone?'ok':(r.hasFunnelData?'warn':'')}"><p class="l">Validación del embudo</p><p class="v" style="font-size:13px;">${validationBadge}</p></div>
+      </div>
+
+      <div class="funnelpanel">
+        <p class="fp-title">EMBUDO DE CANDIDATOS</p>
+        ${buildFunnelSVG(r.vals)}
+      </div>
+
+      <table class="rates">
+        <thead><tr><th>Fase de conversión</th><th style="text-align:right;">Tasa</th></tr></thead>
+        <tbody>${ratesRows}</tbody>
+      </table>
+
+      ${w.comentarios ? `<div class="section-title">Incidencias / comentarios</div><p class="comments">${String(w.comentarios).replace(/</g,'&lt;')}</p>` : ''}
+    </div>
+
+    ${weeks.length>1 ? `<div class="card" style="margin-top:16px;">
+      <h2>Evolución de la conversión total</h2>
+      <p class="hint">Incorporados / recibidos, semana a semana</p>
+      ${trendRows}
+    </div>` : ''}
+  `;
+}
+
+startListening();
+</script>
+</body>
+</html>
