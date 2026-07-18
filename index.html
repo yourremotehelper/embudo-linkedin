@@ -539,7 +539,17 @@ function renderReport(w){
   `;
 }
 
+function getMondayISO(d){
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = (day===0 ? -6 : 1-day);
+  date.setDate(date.getDate()+diff);
+  return date.toISOString().slice(0,10);
+}
+
 startListening();
+document.getElementById('f-weekstart').value = getMondayISO(new Date());
+openOrCreateWeek();
 </script>
 </body>
 </html>
