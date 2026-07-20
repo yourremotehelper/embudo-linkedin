@@ -97,6 +97,22 @@
   .counter .cval-input:focus{outline:2px solid var(--info);outline-offset:1px;}
   .counter .cval-input::-webkit-inner-spin-button,
   .counter .cval-input::-webkit-outer-spin-button{opacity:0.6;}
+  .namedstage{padding:10px 0;border-bottom:1px solid var(--line);}
+  .ns-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .ns-count{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;background:var(--paper);padding:2px 9px;border-radius:10px;}
+  .ns-add{display:flex;gap:6px;margin-bottom:8px;}
+  .ns-input{flex:1;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;}
+  .ns-addbtn{padding:6px 10px;font-size:12px;}
+  .ns-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .ns-chip{background:var(--info-bg);color:var(--info);font-size:12px;font-weight:500;padding:4px 6px 4px 10px;border-radius:14px;display:flex;align-items:center;gap:5px;}
+  .ns-x{background:none;border:none;color:var(--info);font-size:14px;padding:0 2px;cursor:pointer;line-height:1;}
+  .ns-x:hover{color:var(--alert);}
+  .report-names{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;}
+  @media (max-width:640px){.report-names{grid-template-columns:1fr;}}
+  .report-names .rn-col h3{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;text-transform:uppercase;}
+  .report-names .rn-col ul{list-style:none;margin:0;padding:0;}
+  .report-names .rn-col li{font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line);}
+  .report-names .rn-col .rn-empty{font-size:12px;color:var(--ink-soft);}
   .weeklist{list-style:none;margin:0;padding:0;}
   .weeklist li{
     display:flex;justify-content:space-between;align-items:center;gap:8px;
@@ -240,6 +256,10 @@ const TRANSITIONS_DEF = [
   {from:'demo', to:'albert', label:'Tasa de avance a Albert', desc:'Albert / demo'},
   {from:'albert', to:'incorporados', label:'Tasa de incorporación final', desc:'Incorporados / reunión con Albert'}
 ];
+const NAMED_STAGE_KEYS = ['demo','albert','incorporados'];
+function genId(){ return 'p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const ALL_FIELDS = [...COUNTER_FIELDS_ACT, ...COUNTER_FIELDS_FUNNEL].map(f=>f.key);
 
@@ -258,7 +278,7 @@ function pct(n){ return (n!==null && isFinite(n) && !isNaN(n)) ? (n*100).toFixed
 function safeDiv(a,b){ return b>0 ? a/b : null; }
 function blankWeek(weekStart){
   const w = {weekStart, comentarios:''};
-  ALL_FIELDS.forEach(k=> w[k]=0);
+  ALL_FIELDS.forEach(k=> { w[k] = NAMED_STAGE_KEYS.includes(k) ? [] : 0; });
   return w;
 }
 
@@ -272,7 +292,10 @@ function startListening(){
   unsubList = db.collection('weeks').orderBy('weekStart').onSnapshot(snap=>{
     weeks = snap.docs.map(d=>({id:d.id, ...d.data()}));
     ALL_FIELDS.forEach(()=>{});
-    weeks.forEach(w=> ALL_FIELDS.forEach(k=>{ if(typeof w[k]!=='number') w[k]=w[k]||0; }));
+    weeks.forEach(w=> ALL_FIELDS.forEach(k=>{
+      if(NAMED_STAGE_KEYS.includes(k)){ if(!Array.isArray(w[k])) w[k]=[]; }
+      else if(typeof w[k]!=='number'){ w[k]=w[k]||0; }
+    }));
     setConn(true);
     renderWeekList();
     if(currentId){
@@ -338,7 +361,10 @@ function openWeek(id){
   unsubCurrent = db.collection('weeks').doc(id).onSnapshot(snap=>{
     if(!snap.exists) return;
     const w = {id:snap.id, ...snap.data()};
-    ALL_FIELDS.forEach(k=>{ if(typeof w[k]!=='number') w[k]=w[k]||0; });
+    ALL_FIELDS.forEach(k=>{
+      if(NAMED_STAGE_KEYS.includes(k)){ if(!Array.isArray(w[k])) w[k]=[]; }
+      else if(typeof w[k]!=='number'){ w[k]=w[k]||0; }
+    });
     document.getElementById('f-weekstart').value = w.weekStart;
     document.getElementById('f-comentarios').value = w.comentarios || '';
     renderCounters(w);
@@ -353,7 +379,66 @@ function renderCounters(w){
   actEl.innerHTML = '';
   fEl.innerHTML = '';
   COUNTER_FIELDS_ACT.forEach(f=> actEl.appendChild(counterRow(f, w[f.key])));
-  COUNTER_FIELDS_FUNNEL.forEach(f=> fEl.appendChild(counterRow(f, w[f.key])));
+  COUNTER_FIELDS_FUNNEL.forEach(f=>{
+    if(NAMED_STAGE_KEYS.includes(f.key)) fEl.appendChild(namedStageBlock(f, w[f.key]||[]));
+    else fEl.appendChild(counterRow(f, w[f.key]));
+  });
+}
+
+function namedStageBlock(f, list){
+  const wrap = document.createElement('div');
+  wrap.className = 'namedstage';
+  wrap.innerHTML = `
+    <div class="ns-head"><span class="cname">${f.label}</span><span class="ns-count">${list.length}</span></div>
+    <div class="ns-add">
+      <input type="text" class="ns-input" placeholder="Nombre y apellido…">
+      <button class="ghost ns-addbtn">Añadir</button>
+    </div>
+    <div class="ns-chips"></div>
+  `;
+  const chipsEl = wrap.querySelector('.ns-chips');
+  list.forEach(person=>{
+    const chip = document.createElement('span');
+    chip.className = 'ns-chip';
+    chip.innerHTML = `${escapeHtml(person.name)} <button class="ns-x" title="Quitar">×</button>`;
+    chip.querySelector('.ns-x').onclick = ()=> removePerson(f.key, person);
+    chipsEl.appendChild(chip);
+  });
+  const inputEl = wrap.querySelector('.ns-input');
+  const doAdd = ()=>{
+    const name = inputEl.value.trim();
+    if(!name) return;
+    addPerson(f.key, name);
+    inputEl.value = '';
+  };
+  wrap.querySelector('.ns-addbtn').onclick = doAdd;
+  inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doAdd(); } });
+  return wrap;
+}
+
+async function addPerson(field, name){
+  if(!currentId) return;
+  const person = {id: genId(), name};
+  try{
+    await db.collection('weeks').doc(currentId).update({
+      [field]: firebase.firestore.FieldValue.arrayUnion(person)
+    });
+  }catch(e){
+    console.error(e);
+    alert('No se pudo añadir el nombre. Revisa tu conexión.');
+  }
+}
+
+async function removePerson(field, person){
+  if(!currentId) return;
+  try{
+    await db.collection('weeks').doc(currentId).update({
+      [field]: firebase.firestore.FieldValue.arrayRemove(person)
+    });
+  }catch(e){
+    console.error(e);
+    alert('No se pudo quitar el nombre. Revisa tu conexión.');
+  }
 }
 
 function counterRow(f, value){
@@ -426,7 +511,7 @@ async function deleteWeek(id){
 }
 
 function computeRates(w){
-  const vals = {}; STAGES.forEach(s=> vals[s.key]=w[s.key]||0);
+  const vals = {}; STAGES.forEach(s=> vals[s.key] = NAMED_STAGE_KEYS.includes(s.key) ? (w[s.key]||[]).length : (w[s.key]||0));
   const rates = TRANSITIONS_DEF.map(t=>({...t, rate: safeDiv(vals[t.to], vals[t.from])}));
   let bottleneckIdx = -1, minRate = Infinity;
   rates.forEach((r,i)=>{ if(r.rate!==null && r.rate<minRate){ minRate=r.rate; bottleneckIdx=i; } });
@@ -527,6 +612,18 @@ function renderReport(w){
         <thead><tr><th>Fase de conversión</th><th style="text-align:right;">Tasa</th></tr></thead>
         <tbody>${ratesRows}</tbody>
       </table>
+
+      <div class="section-title">Personas por fase</div>
+      <div class="report-names">
+        ${NAMED_STAGE_KEYS.map(key=>{
+          const stage = STAGES.find(s=>s.key===key);
+          const list = w[key]||[];
+          const items = list.length
+            ? `<ul>${list.map(p=>`<li>${escapeHtml(p.name)}</li>`).join('')}</ul>`
+            : `<p class="rn-empty">Sin nombres todavía</p>`;
+          return `<div class="rn-col"><h3>${stage.label}</h3>${items}</div>`;
+        }).join('')}
+      </div>
 
       ${w.comentarios ? `<div class="section-title">Incidencias / comentarios</div><p class="comments">${String(w.comentarios).replace(/</g,'&lt;')}</p>` : ''}
     </div>
